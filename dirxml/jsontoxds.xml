@@ -1,0 +1,106 @@
+<rule>
+ <description>Successfull poll-users command handler actions bases on trigger job;</description>
+ <conditions>
+  <and>
+   <if-operation mode="regex" op="equal">status</if-operation>
+   <if-xpath op="true">./driver-operation-data[@command="custom-IDM-JOB-GET-USERS"]</if-xpath>
+   <if-local-variable mode="nocase" name="StatusValue" op="equal">200</if-local-variable>
+  </and>
+ </conditions>
+ <actions>
+  <do-trace-message>
+   <arg-string>
+    <token-text xml:space="preserve">poll-users completed successfully; </token-text>
+   </arg-string>
+  </do-trace-message>
+  <do-set-local-variable name="StatusValue" scope="policy">
+   <arg-string>
+    <token-xpath expression="./driver-operation-data/response/value/@status"/>
+   </arg-string>
+  </do-set-local-variable>
+  <do-trace-message>
+   <arg-string>
+    <token-text xml:space="preserve">Status value  =></token-text>
+    <token-local-variable name="StatusValue"/>
+   </arg-string>
+  </do-trace-message>
+  <do-set-local-variable name="MessageValue" scope="policy">
+   <arg-string>
+    <token-xpath expression="./driver-operation-data/response/value/@message"/>
+   </arg-string>
+  </do-set-local-variable>
+  <do-trace-message>
+   <arg-string>
+    <token-text xml:space="preserve">Status value  =></token-text>
+    <token-local-variable name="MessageValue"/>
+   </arg-string>
+  </do-trace-message>
+  <do-set-local-variable name="MessageValueText" scope="policy">
+   <arg-string>
+    <token-xpath expression="./driver-operation-data/response/value/text()"/>
+   </arg-string>
+  </do-set-local-variable>
+  <do-set-local-variable name="MessageValueTextToNetIQ" scope="policy">
+   <arg-string>
+    <token-text xml:space="preserve">{ "totalResults": "$getCount$","results": [
+     </token-text>
+    <token-local-variable name="MessageValueText"/>
+    <token-text xml:space="preserve">]}</token-text>
+   </arg-string>
+  </do-set-local-variable>
+  <do-set-local-variable name="xmlInput" scope="policy">
+   <arg-string>
+    <token-base64-encode charset="UTF-8">
+     <token-replace-all regex="&amp;lt;" replace-with="&lt;">
+      <token-xml-serialize>
+       <token-text xml:space="preserve">&lt;status event-id="" level="success" type="driver-general">
+      &lt;driver-operation-data api="targetURL:" class-name="users" command="query" dest-dn="" event-id="" src-dn="">
+        &lt;response method="GET" url="">
+          &lt;header accept="application/json" content-type="application/json"/>
+     &lt;value message="OK" status="200">
+     $MessageValueTextToNetIQ$
+     &lt;/value>
+        &lt;/response>
+      &lt;/driver-operation-data>
+    &lt;/status></token-text>
+     </token-xml-serialize>
+    </token-replace-all>
+   </token-base64-encode>
+  </arg-string>
+ </do-set-local-variable>
+ <do-set-local-variable name="applicationContent" scope="policy">
+  <arg-string>
+   <token-xpath expression="rs:jsonToXDS($xmlInput)"/>
+  </arg-string>
+ </do-set-local-variable>
+ <do-if>
+  <arg-conditions>
+   <and>
+    <if-local-variable mode="nocase" name="applicationContent" op="not-equal"/>
+   </and>
+  </arg-conditions>
+  <arg-actions>
+   <do-set-local-variable name="xdscontent" scope="policy">
+    <arg-node-set>
+     <token-xml-parse>
+      <token-local-variable name="applicationContent"/>
+     </token-xml-parse>
+    </arg-node-set>
+   </do-set-local-variable>
+   <do-set-local-variable name="users" scope="policy">
+    <arg-node-set>
+     <token-xpath expression="$xdscontent/*//*[local-name()='value']"/>
+    </arg-node-set>
+   </do-set-local-variable>
+   <do-trace-message>
+    <arg-string>
+     <token-text xml:space="preserve">total users available =></token-text>
+     <token-xpath expression="count($users)"/>
+    </arg-string>
+   </do-trace-message>
+  </arg-actions>
+  <arg-actions/>
+ </do-if>
+ <do-strip-xpath expression="./driver-operation-data"/>
+</actions>
+</rule>

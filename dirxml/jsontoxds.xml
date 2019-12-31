@@ -1,5 +1,5 @@
 <rule>
- <description>Successfull poll-users command handler actions bases on trigger job;</description>
+ <description>Successfull  command handler actions bases on trigger job;</description>
  <conditions>
   <and>
    <if-operation mode="regex" op="equal">status</if-operation>

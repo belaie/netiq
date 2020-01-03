@@ -1,0 +1,34 @@
+<rule>
+		<description>Create -sync- event for </description>
+		<comment xml:space="preserve">1. Create Sync event
+2. Delete triggering attrubute from Source, Target, Channel</comment>
+		<conditions>
+			<and>
+				<if-class-name mode="nocase" op="equal">User</if-class-name>
+			</and>
+		</conditions>
+		<actions>
+			<do-append-xml-element expression=".." name="sync"/>
+			<do-set-xml-attr expression="../sync[last()]" name="class-name">
+				<arg-string>
+					<token-class-name/>
+				</arg-string>
+			</do-set-xml-attr>
+			<do-set-xml-attr expression="../sync[last()]" name="src-dn">
+				<arg-string>
+					<token-src-dn/>
+				</arg-string>
+			</do-set-xml-attr>
+			<do-set-xml-attr expression="../sync[last()]" name="qualified-src-dn">
+				<arg-string>
+					<token-xpath expression="@qualified-src-dn"/>
+				</arg-string>
+			</do-set-xml-attr>
+			<do-trace-message>
+				<arg-string>
+					<token-text xml:space="preserve">----------- Pump SYNC event to the Sub Channel ----------------</token-text>
+				</arg-string>
+			</do-trace-message>
+			<do-strip-op-attr name="triggerAttribute"/>
+		</actions>
+	</rule>

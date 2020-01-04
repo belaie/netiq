@@ -1,0 +1,47 @@
+<actions>
+   <do-set-local-variable name="entitlementDN" scope="policy">
+      <arg-string>
+         <token-text xml:space="preserve">entitlement DN you want</token-text>
+      </arg-string>
+   </do-set-local-variable>
+   <do-set-local-variable name="prevEntRef" scope="policy">
+      <arg-node-set>
+         <token-query class-name="User" scope="entry">
+            <arg-dn>
+               <token-dest-dn />
+            </arg-dn>
+            <arg-string>
+               <token-text xml:space="preserve">DirXML-EntitlementRef</token-text>
+            </arg-string>
+         </token-query>
+      </arg-node-set>
+   </do-set-local-variable>
+   <do-for-each>
+      <arg-node-set>
+         <token-local-variable name="prevEntRef" />
+      </arg-node-set>
+      <arg-actions>
+         <do-if>
+            <arg-conditions>
+               <and>
+                  <if-xpath op="true">$current-node/attr/value[component[@name="volume"]/text()=$entitlementDN and component[@name="nameSpace"]/text()="1"]</if-xpath>
+               </and>
+            </arg-conditions>
+            <arg-actions>
+               <do-set-local-variable name="isGranted" scope="policy">
+                  <arg-string>
+                     <token-text xml:space="preserve">true</token-text>
+                  </arg-string>
+               </do-set-local-variable>
+            </arg-actions>
+            <arg-actions>
+               <do-set-local-variable name="isGranted" scope="policy">
+                  <arg-string>
+                     <token-text xml:space="preserve">false</token-text>
+                  </arg-string>
+               </do-set-local-variable>
+            </arg-actions>
+         </do-if>
+      </arg-actions>
+   </do-for-each>
+</actions>

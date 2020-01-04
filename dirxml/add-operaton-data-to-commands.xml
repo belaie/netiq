@@ -1,0 +1,18 @@
+ <do-set-dest-attr-value direct="true" name="psexecute">
+      <arg-association>
+         <token-resolve datastore="src">
+            <arg-dn>
+               <token-text xml:space="preserve">{userref}</token-text>
+            </arg-dn>
+         </token-resolve>
+      </arg-association>
+      <arg-value type="string">
+         <token-local-variable name="cmdlet" />
+      </arg-value>
+   </do-set-dest-attr-value>
+   <do-append-xml-element expression="../modify[@direct]" name="operation-data" />
+   <do-set-xml-attr expression="../modify[@direct]/operation-data" name="prop.psexecute.Action">
+      <arg-string>
+         <token-local-variable name="action" />
+      </arg-string>
+   </do-set-xml-attr>

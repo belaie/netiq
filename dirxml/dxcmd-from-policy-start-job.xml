@@ -1,0 +1,81 @@
+<!--
+1. username must be "dotted" format; one can use parseDN; example:
+
+<token-parse-dn dest-dn-format="dot" src-dn-format="ldap">
+                        <token-local-variable name="local.sub.etp.resource.UserId"/>
+                    </token-parse-dn>
+
+2. Jobname must be in "dotted" format too.
+
+
+3. For more java lovers, one can dig into this: https://www.novell.com/documentation/developer/dirxml/dirxmlbk/api/com/novell/nds/dirxml/util/DxCommand.html
+
+-->
+
+
+<rule>
+   <description>Schedule job on the startup</description>
+   <conditions>
+      <and>
+         <if-operation mode="nocase" op="equal">status</if-operation>
+         <if-xpath op="true">@type="startup"</if-xpath>
+      </and>
+   </conditions>
+   <actions>
+      <do-set-local-variable name="local.sub.etp.ScheduleArguments" scope="policy">
+         <arg-string>
+            <token-text xml:space="preserve">-user </token-text>
+            <token-local-variable name="local.sub.etp.resource.UserId" />
+            <token-text xml:space="preserve"> </token-text>
+            <token-text xml:space="preserve"> -password </token-text>
+            <token-local-variable name="local.sub.etp.resource.Password" />
+            <token-text xml:space="preserve"> -startjob </token-text>
+            <token-local-variable name="local.sub.ctp.JobName" />
+         </arg-string>
+      </do-set-local-variable>
+      <do-trace-message>
+         <arg-string>
+            <token-text xml:space="preserve">Prepare cmdline =&gt; </token-text>
+            <token-local-variable name="local.sub.etp.ScheduleArguments" />
+         </arg-string>
+      </do-trace-message>
+      <do-set-local-variable name="local.sub.etp.Scheduleob" scope="policy">
+         <arg-object>
+            <token-xpath expression="jcmd:commandLine(string($local.sub.etp.ScheduleArguments))" />
+         </arg-object>
+      </do-set-local-variable>
+      <do-trace-message>
+         <arg-string>
+            <token-text xml:space="preserve">Initiate startup token job =&gt; </token-text>
+            <token-local-variable name="local.sub.etp.Scheduleob" />
+         </arg-string>
+      </do-trace-message>
+      <do-if>
+         <arg-conditions>
+            <and>
+               <if-local-variable mode="nocase" name="local.sub.etp.Scheduleob" op="not-equal">0</if-local-variable>
+            </and>
+         </arg-conditions>
+         <arg-actions>
+            <do-set-local-variable name="local.sub.startup.Message" scope="policy">
+               <arg-string>
+                  <token-text xml:space="preserve">Driver could not run token refresh job with arguments </token-text>
+                  <token-local-variable name="local.sub.etp.ScheduleArguments" />
+                  <token-text xml:space="preserve"> Please fix the error, clean driver event cache before starting the driver again.</token-text>
+               </arg-string>
+            </do-set-local-variable>
+            <do-status level="error">
+               <arg-string>
+                  <token-local-variable name="local.sub.startup.Message" />
+               </arg-string>
+            </do-status>
+            <do-status level="fatal">
+               <arg-string>
+                  <token-local-variable name="local.sub.startup.Message" />
+               </arg-string>
+            </do-status>
+         </arg-actions>
+         <arg-actions />
+      </do-if>
+   </actions>
+</rule>

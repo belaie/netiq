@@ -1,0 +1,164 @@
+<!-- query -->
+
+<rule>
+   <description>[service] Convert Query to  SOAP doc</description>
+   <conditions>
+      <and>
+         <if-operation mode="case" op="equal">query</if-operation>
+      </and>
+   </conditions>
+   <actions>
+      <do-set-local-variable name="local.sub.etp.QueryDN" scope="policy">
+         <arg-node-set>
+            <token-query class-name="User" datastore="src">
+               <arg-dn>
+                  <token-text xml:space="preserve">MGMT\World</token-text>
+               </arg-dn>
+               <arg-match-attr name="Custom-UPN">
+                  <arg-value type="string">
+                     <token-op-attr name="userName" />
+                  </arg-value>
+               </arg-match-attr>
+            </token-query>
+         </arg-node-set>
+      </do-set-local-variable>
+      <do-if>
+         <arg-conditions>
+            <and>
+               <if-xpath op="true">count($local.sub.etp.QueryDN) =1</if-xpath>
+            </and>
+         </arg-conditions>
+         <arg-actions>
+            <do-set-local-variable name="local.sub.etp.DN" scope="policy">
+               <arg-string>
+                  <token-xpath expression="$local.sub.etp.QueryDN/@src-dn" />
+               </arg-string>
+            </do-set-local-variable>
+         </arg-actions>
+         <arg-actions />
+      </do-if>
+      <do-append-xml-element expression=".." name="soap:Envelope" />
+      <do-append-xml-element expression="../soap:Envelope" name="soap:Header" />
+      <do-append-xml-element expression="../soap:Envelope" name="soap:Body" />
+      <do-append-xml-element expression="../soap:Envelope/soap:Body" name="cad:GetUser" />
+      <do-append-xml-element expression="../soap:Envelope/soap:Body/cad:GetUser" name="cad:_UID" />
+      <do-append-xml-text expression="../soap:Envelope/soap:Body/cad:GetUser/cad:_UID">
+         <arg-string>
+            <token-local-variable name="SessionID" />
+         </arg-string>
+      </do-append-xml-text>
+      <do-append-xml-element expression="../soap:Envelope/soap:Body/cad:GetUser" name="cad:upn" />
+      <do-append-xml-text expression="../soap:Envelope/soap:Body/cad:GetUser/cad:upn">
+         <arg-string>
+            <token-op-attr name="userName" />
+         </arg-string>
+      </do-append-xml-text>
+      <do-append-xml-element expression=".." name="operation-data" />
+      <do-set-xml-attr expression="../operation-data" name="command">
+         <arg-string>
+            <token-text>query</token-text>
+         </arg-string>
+      </do-set-xml-attr>
+      <do-set-xml-attr expression="../operation-data" name="ref-src-dn">
+         <arg-string>
+            <token-local-variable name="local.sub.etp.DN" />
+         </arg-string>
+      </do-set-xml-attr>
+      <do-strip-xpath expression="self::query" />
+   </actions>
+</rule>
+
+
+<!-- response -->
+
+<policy xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <rule>
+      <description>[service] Handle GetUserResponse documents</description>
+      <conditions>
+         <and>
+            <if-xpath op="true">self::soap:Envelope/soap:Body</if-xpath>
+            <if-xpath op="true">//operation-data[@command="query"]</if-xpath>
+         </and>
+      </conditions>
+      <actions>
+         <do-set-local-variable name="Id" scope="policy">
+            <arg-string>
+               <token-xpath expression="*//*[local-name()='ID']/text()" />
+            </arg-string>
+         </do-set-local-variable>
+         <!-- fix asso -->
+         <do-if>
+            <arg-conditions>
+               <and>
+                  <if-local-variable mode="regex" name="Id" op="not-equal">.+</if-local-variable>
+               </and>
+            </arg-conditions>
+            <arg-actions>
+               <do-trace-message>
+                  <arg-string>
+                     <token-text xml:space="preserve">User not found!!</token-text>
+                  </arg-string>
+               </do-trace-message>
+               <do-break />
+            </arg-actions>
+            <arg-actions />
+         </do-if>
+         <do-append-xml-element expression=".." name="instance" />
+         <do-set-xml-attr expression="../instance" name="class-name">
+            <arg-string>
+               <token-text xml:space="preserve">User</token-text>
+            </arg-string>
+         </do-set-xml-attr>
+         <!-- fix fake dn -->
+         <do-set-xml-attr expression="../instance" name="src-dn">
+            <arg-string>
+               <token-xpath expression="//operation-data[@command=&quot;query&quot;]/@ref-src-dn" />
+            </arg-string>
+         </do-set-xml-attr>
+         <!-- fix association -->
+         <do-append-xml-element expression=".." name="association" />
+         <do-append-xml-element expression="../instance" name="association" />
+         <do-set-xml-attr expression="../instance/association" name="state">
+            <arg-string>
+               <token-text>associated</token-text>
+            </arg-string>
+         </do-set-xml-attr>
+         <do-append-xml-text expression="../instance/association">
+            <arg-string>
+               <token-xpath expression="*//*[local-name()='ID']/text()" />
+            </arg-string>
+         </do-append-xml-text>
+         <!-- add attributes -->
+         <do-append-xml-element expression="../instance" name="attr" />
+         <do-set-xml-attr expression="../instance/attr[last()]" name="attr-name">
+            <arg-string>
+               <token-text xml:space="preserve">Id</token-text>
+            </arg-string>
+         </do-set-xml-attr>
+         <do-append-xml-element expression="../instance/attr[@attr-name='Id']" name="value" />
+         <do-append-xml-text expression="../instance[@class-name=&quot;User&quot;]/attr[@attr-name=&quot;Id&quot;]/value">
+            <arg-string>
+               <token-xpath expression="*//*[local-name()='ID']/text()" />
+            </arg-string>
+         </do-append-xml-text>
+         <do-set-local-variable name="Id" scope="policy">
+            <arg-string>
+               <token-xpath expression="*//*[local-name()='ID']/text()" />
+            </arg-string>
+         </do-set-local-variable>
+         <do-set-local-variable name="source-dn" scope="policy">
+            <arg-string>
+               <token-xpath expression="//operation-data[@command=&quot;query&quot;]/@src-dn" />
+            </arg-string>
+         </do-set-local-variable>
+         <do-trace-message>
+            <arg-string>
+               <token-text xml:space="preserve">Unique ID VALUE =&gt; </token-text>
+               <token-local-variable name="Id" />
+            </arg-string>
+         </do-trace-message>
+         <do-strip-xpath expression="self::soap:Envelope" />
+         <do-break />
+      </actions>
+   </rule>
+</policy>

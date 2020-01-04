@@ -1,0 +1,47 @@
+<rule>
+   <description>[DB] Convert Add to  DDL doc</description>
+   <comment name="author" xml:space="preserve">Maqsood Ali Bhatti</comment>
+   <comment name="version" xml:space="preserve">5</comment>
+   <comment name="lastchanged" xml:space="preserve">Dec 20, 2017</comment>
+   <conditions>
+      <and>
+         <if-operation mode="case" op="equal">add</if-operation>
+      </and>
+   </conditions>
+   <actions>
+      <do-set-local-variable name="local.otp.UserName" scope="policy">
+         <arg-string>
+            <token-op-property name="prop.idm.UserName" />
+         </arg-string>
+      </do-set-local-variable>
+      <do-set-local-variable name="local.otp.UserPassword" scope="policy">
+         <arg-string>
+            <token-op-property name="prop.idm.UserPassword" />
+         </arg-string>
+      </do-set-local-variable>
+      <do-append-xml-element expression=".." name="jdbc:statement" />
+      <do-append-xml-element expression="../jdbc:statement[last()]" name="jdbc:call-procedure" />
+      <do-set-xml-attr expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]" name="jdbc:name">
+         <arg-string>
+            <token-text xml:space="preserve">IDM.CREATEUSER</token-text>
+         </arg-string>
+      </do-set-xml-attr>
+      <do-append-xml-element expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]" name="jdbc:param" />
+      <do-append-xml-element expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]/jdbc:param[last()]" name="jdbc:value" />
+      <do-append-xml-text expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]/jdbc:param[last()]/jdbc:value[last()]">
+         <arg-string>
+            <token-local-variable name="local.otp.UserName" />
+         </arg-string>
+      </do-append-xml-text>
+      <do-append-xml-element expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]" name="jdbc:param" />
+      <do-append-xml-element expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]/jdbc:param[last()]" name="jdbc:value" />
+      <do-append-xml-text expression="../jdbc:statement[last()]/jdbc:call-procedure[last()]/jdbc:param[last()]/jdbc:value[last()]">
+         <arg-string>
+            <token-base64-decode charset="UTF-8">
+               <token-local-variable name="local.otp.UserPassword" />
+            </token-base64-decode>
+         </arg-string>
+      </do-append-xml-text>
+      <do-strip-xpath expression="self::add" />
+   </actions>
+</rule>

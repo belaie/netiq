@@ -1,0 +1,85 @@
+<rule>
+   <description>Handle jdbc:result-set for matching objects</description>
+   <comment name="author" xml:space="preserve">Maqsood Ali Bhatti</comment>
+   <comment name="version" xml:space="preserve">2</comment>
+   <comment name="lastchanged" xml:space="preserve">Dec 20, 20117</comment>
+   <conditions>
+      <and>
+         <if-xpath op="true">self::jdbc:result-set/@jdbc:number-of-rows = 1</if-xpath>
+         <if-xpath op="true">./operation-data[@type="Matching"]</if-xpath>
+      </and>
+   </conditions>
+   <actions>
+      <do-set-local-variable name="ASSO-VALUE" scope="policy">
+         <arg-string>
+            <token-xpath expression="*//*[local-name()='value']/text()" />
+         </arg-string>
+      </do-set-local-variable>
+      <do-set-local-variable name="getDN" scope="policy">
+         <arg-string>
+            <token-xpath expression="./operation-data/@DN" />
+         </arg-string>
+      </do-set-local-variable>
+      <do-trace-message>
+         <arg-string>
+            <token-text xml:space="preserve">add association</token-text>
+            <token-local-variable name="getDN" />
+         </arg-string>
+      </do-trace-message>
+      <!--  association  -->
+      <do-if>
+         <arg-conditions>
+            <and>
+               <if-local-variable mode="nocase" name="ASSO-VALUE" op="not-equal" />
+               <if-local-variable mode="nocase" name="ASSO-VALUE" op="equal">1</if-local-variable>
+            </and>
+         </arg-conditions>
+         <arg-actions>
+            <do-trace-message>
+               <arg-string>
+                  <token-text xml:space="preserve">add association</token-text>
+               </arg-string>
+            </do-trace-message>
+            <do-append-xml-element expression=".." name="instance" />
+            <do-set-xml-attr expression="../instance" name="class-name">
+               <arg-string>
+                  <token-text xml:space="preserve">User</token-text>
+               </arg-string>
+            </do-set-xml-attr>
+            <do-set-xml-attr expression="../instance" name="src-dn">
+               <arg-string>
+                  <token-local-variable name="getDN" />
+                  <token-text xml:space="preserve">:</token-text>
+                  <token-local-variable name="ASSO-VALUE" />
+               </arg-string>
+            </do-set-xml-attr>
+            <do-append-xml-element expression="../instance" name="association" />
+            <do-append-xml-text expression="../instance/association">
+               <arg-string>
+                  <token-local-variable name="getDN" />
+                  <token-text xml:space="preserve">:</token-text>
+                  <token-local-variable name="ASSO-VALUE" />
+               </arg-string>
+            </do-append-xml-text>
+         </arg-actions>
+         <arg-actions />
+      </do-if>
+      <do-if>
+         <arg-conditions>
+            <and>
+               <if-local-variable mode="nocase" name="ASSO-VALUE" op="not-equal" />
+               <if-local-variable mode="nocase" name="ASSO-VALUE" op="equal">0</if-local-variable>
+            </and>
+         </arg-conditions>
+         <arg-actions>
+            <do-trace-message>
+               <arg-string>
+                  <token-text xml:space="preserve">NO MATCH</token-text>
+               </arg-string>
+            </do-trace-message>
+            <do-break />
+         </arg-actions>
+         <arg-actions />
+      </do-if>
+   </actions>
+</rule>

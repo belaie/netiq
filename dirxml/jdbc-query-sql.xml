@@ -1,0 +1,36 @@
+<rule>
+   <description>[DB] Convert Query to  DDL doc</description>
+   <comment name="author" xml:space="preserve">Maqsood Ali Bhatti</comment>
+   <comment name="version" xml:space="preserve">5</comment>
+   <comment name="lastchanged" xml:space="preserve">Dec 20, 2017</comment>
+   <conditions>
+      <and>
+         <if-operation mode="case" op="equal">query</if-operation>
+      </and>
+   </conditions>
+   <actions>
+      <do-append-xml-element expression=".." name="jdbc:statement" />
+      <do-append-xml-element expression="../jdbc:statement[last()]" name="jdbc:sql" />
+      <do-append-xml-text expression="../jdbc:statement/jdbc:sql[last()]">
+         <arg-string>
+            <token-text xml:space="preserve">SELECT COUNT(*) FROM ALL_USERS WHERE USERNAME = '</token-text>
+            <token-upper-case>
+               <token-op-attr name="USERNAME" />
+            </token-upper-case>
+            <token-text xml:space="preserve">'</token-text>
+         </arg-string>
+      </do-append-xml-text>
+      <do-append-xml-element expression="../jdbc:statement[last()]" name="operation-data" />
+      <do-set-xml-attr expression="../jdbc:statement[last()]/operation-data[last()]" name="type">
+         <arg-string>
+            <token-text xml:space="preserve">Matching</token-text>
+         </arg-string>
+      </do-set-xml-attr>
+      <do-set-xml-attr expression="../jdbc:statement[last()]/operation-data[last()]" name="DN">
+         <arg-string>
+            <token-op-attr name="USERNAME" />
+         </arg-string>
+      </do-set-xml-attr>
+      <do-strip-xpath expression="self::query" />
+   </actions>
+</rule>

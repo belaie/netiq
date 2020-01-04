@@ -1,0 +1,38 @@
+<do-start-workflow id="$local.sub.etp.resource.UserId$" time-out="30000" url="$local.sub.etp.resource.Endpoint$" workflow-id="$workflow-ldap-dn$">
+   <arg-password>
+      <token-local-variable name="local.sub.etp.resource.Password" />
+   </arg-password>
+   <arg-dn>
+      <token-local-variable name="lv.user.ldap.DN" />
+   </arg-dn>
+   <arg-string name="Product">
+      <token-local-variable name="lv.group.ldap.DN" />
+   </arg-string>
+   <arg-string name="Accounts">
+      <token-local-variable name="lv.user.ldap.DN" />
+   </arg-string>
+   <arg-string name="Subscriptions">
+      <token-local-variable name="local.sub.ctp.Subscriptions" />
+   </arg-string>
+   <arg-string name="IssueTicket">
+      <token-text xml:space="preserve">N/A</token-text>
+   </arg-string>
+</do-start-workflow>
+
+<do-if>
+   <arg-conditions>
+      <and>
+         <if-local-variable mode="regex" name="error.do-start-workflow" op="equal">.+</if-local-variable>
+      </and>
+   </arg-conditions>
+   <arg-actions>
+      <do-trace-message level="3">
+         <arg-string>
+            <token-text xml:space="preserve">Workflow Error Detected
+
+PLACEHOLDER</token-text>
+         </arg-string>
+      </do-trace-message>
+   </arg-actions>
+   <arg-actions />
+</do-if>
